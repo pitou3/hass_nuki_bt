@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import async_timeout
 
 from bleak import BleakError
+from construct import ConstructError
 
 from homeassistant.components import bluetooth
 from homeassistant.components.bluetooth.active_update_coordinator import (
@@ -112,6 +113,13 @@ class NukiDataUpdateCoordinator(ActiveBluetoothDataUpdateCoordinator[None]):
                 try:
                     await self._async_update()
                 except BleakError:
+                    return False
+                except ConstructError as ex:
+                    _LOGGER.error(
+                        "Failed to parse response from Nuki device — "
+                        "this may indicate a firmware version mismatch (e.g. Gen 1 lock missing 'timezone_id'): %s",
+                        ex,
+                    )
                     return False
                 return True
         return False
