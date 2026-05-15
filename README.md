@@ -46,6 +46,23 @@ hass_nuki_bt can connect to the Nuki lock in 2 ways:
   * "App" will allow you to run hass_nuki_bt alongside a Nuki Bridge, but can lead to either device missing updates.
 
 
+## Compatibility
+
+### Nuki Smart Lock Generation 1 (firmware 1.x)
+
+Gen 1 Nuki Smart Locks running firmware 1.x are supported with the following notes:
+
+- **Firmware 2.x upgrade not required.** This fork includes a fix for a parsing failure that occurred because the Gen 1 config response does not include the `timezone_id` field added in later firmware versions.
+- **`timezone_id` will be `None`** in the device config — this has no impact on lock/unlock functionality or any exposed entities.
+- This fix is tracked in [`pitou3/pyNukiBT`](https://github.com/pitou3/pyNukiBT), a fork of the underlying Bluetooth library, where `timezone_id` is correctly marked as optional.
+
+If you encounter the following error in your Home Assistant logs, you are hitting this issue:
+
+```
+construct.core.StreamError: Error in path (parsing) -> payload -> timezone_id
+stream read less than specified amount, expected 2, found 0
+```
+
 ## Contributions are welcome!
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
