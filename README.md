@@ -50,18 +50,32 @@ hass_nuki_bt can connect to the Nuki lock in 2 ways:
 
 ### Nuki Smart Lock Generation 1 (firmware 1.x)
 
-Gen 1 Nuki Smart Locks running firmware 1.x are supported with the following notes:
+Gen 1 Nuki Smart Locks running firmware 1.x are supported without needing a firmware upgrade.
 
-- **Firmware 2.x upgrade not required.** This fork includes a fix for a parsing failure that occurred because the Gen 1 config response does not include the `timezone_id` field added in later firmware versions.
-- **`timezone_id` will be `None`** in the device config — this has no impact on lock/unlock functionality or any exposed entities.
-- This fix is tracked in [`pitou3/pyNukiBT`](https://github.com/pitou3/pyNukiBT), a fork of the underlying Bluetooth library, where `timezone_id` is correctly marked as optional.
+The upstream `pyNukiBT` library assumes all devices return a `timezone_id` field in their config response, but Gen 1 firmware predates that field. This fork points to [`pitou3/pyNukiBT`](https://github.com/pitou3/pyNukiBT) which marks `timezone_id` as optional, fixing the crash. The `timezone_id` value will be `None` on Gen 1 devices, which has no impact on any functionality.
 
-If you encounter the following error in your Home Assistant logs, you are hitting this issue:
+If you see this error in your Home Assistant logs, you are hitting this issue:
 
 ```
 construct.core.StreamError: Error in path (parsing) -> payload -> timezone_id
 stream read less than specified amount, expected 2, found 0
 ```
+
+## Changes from upstream
+
+This fork ([`pitou3/hass_nuki_bt`](https://github.com/pitou3/hass_nuki_bt)) includes the following fixes on top of [`ronengr/hass_nuki_bt`](https://github.com/ronengr/hass_nuki_bt):
+
+### Gen 1 firmware support (`pyNukiBT`)
+- Switched the `pyNukiBT` dependency from the PyPI release (`0.0.19`) to [`pitou3/pyNukiBT`](https://github.com/pitou3/pyNukiBT), which makes `timezone_id` optional in the Config struct so that Gen 1 locks (firmware 1.x) no longer cause a parse crash on setup.
+
+### Improved error handling (`coordinator.py`)
+- `async_wait_ready` now catches `ConstructError` (from the `construct` library) in addition to `BleakError`, so firmware-level parse failures produce a clear, single-line log message instead of a 50-line unhandled exception traceback.
+
+### HACS direct install (`hacs.json`)
+- Removed `zip_release: true` and the associated `filename` field. The upstream repo requires a GitHub Release with an attached zip artifact for HACS installation, which does not exist in this fork. Without this change HACS cannot download the integration. Removing these fields lets HACS install directly from the repository.
+
+### Translation file fix (`translations/en.json`)
+- Replaced the `en.json` symlink (which pointed to `../strings.json`) with the actual JSON content. Git symlinks become plain text files when downloaded by HACS, causing Home Assistant to fail loading the config flow with `unexpected character: line 1 column 1 (char 0)`.
 
 ## Contributions are welcome!
 
